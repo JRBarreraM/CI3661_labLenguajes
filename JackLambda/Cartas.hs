@@ -20,7 +20,7 @@ data Carta = Carta {
     palo :: Palo
 } deriving Eq
 
-data Jugador = Dealer | Player
+data Jugador = Dealer | Player deriving Show
 
 newtype Mano = Mano [Carta] deriving Show
 
@@ -53,10 +53,13 @@ cantidadCartas (Mano x) = length x
 
 valor :: Mano ->Int
 valor (Mano []) = 0
-valor (Mano (c:cs)) =
+valor (Mano (c:cs)) = valorCarta(c) + valor (Mano cs)
+
+{-
     if valorCarta(c) + valor (Mano cs) > 21 && valorCarta(c) == 11
         then 1 + valor (Mano cs)
         else valorCarta(c) + valor (Mano cs)
+-}
 
 valorCarta :: Carta -> Int
 valorCarta (Carta r p) = case r of
@@ -66,22 +69,33 @@ valorCarta (Carta r p) = case r of
     King -> 10
     Ace -> 11
 
-{-
+
 busted :: Mano ->Bool
+busted x = valor (x) > 21
 
 blackjack :: Mano ->Bool
+blackjack (Mano x) = valor(Mano x) == 21 && length x == 2
 
-ganador :: Mano ->Mano ->Jugador
-
+ganador :: Mano ->Mano ->Jugador --Preguntar a Jean por empate
+ganador x y | busted(x) || blackjack(y) = Player
+            | busted(y) || blackjack(x) = Dealer
+            | valor(x) > valor(y) || valor(x) == valor(y) = Dealer
+            | valor(x) < valor(y) = Player
+{-
 separar :: Mano ->(Mano, Carta, Mano)
-
+separar x | odd (length x) = 
+          | even (length x) = 
+-}
 --Funciones de modificación:
-barajar :: StdGen ->Mano ->Mano
+--barajar :: StdGen ->Mano ->Mano
+
 inicialLambda :: Mano ->(Mano, Mano)
+inicialLambda (Mano (x:y:xs)) = (Mano [x,y], Mano xs)
 
 data Mazo = Vacio | Mitad Carta Mazo Mazo
 data Eleccion = Izquierdo | Derecho
 
+{-
 --Funciones de construcción:
 desdeMano :: Mano ->Mazo
 
