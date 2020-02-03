@@ -12,6 +12,34 @@
 --Surrender: Después de recibir la mano inicial, el jugador puede decidir
 --no jugar la ronda y rendirse, cediendo la mitad de su apuesta.
 
+module Cartas
+(   
+    Palo,
+    Rango,
+    Carta,
+    Jugador,
+    Mano,
+    Mazo,
+    Eleccion,
+    vacia,
+    baraja,
+    cantidadCartas, 
+    valor,
+    busted,
+    blackjack,
+    ganador,
+    separar,
+    barajar,
+    inicialLambda,
+    desdeMano,
+    puedePicar,
+    aplanar,
+    reconstruir,
+    robar,
+    juegaLambda,
+    manoALista
+) where
+
 import System.Random
 import Data.List
 
@@ -19,8 +47,8 @@ data Palo = Treboles | Diamantes | Picas | Corazones deriving (Eq, Enum)
 data Rango = N Int | Jack | Queen | King | Ace deriving Eq
 
 data Carta = Carta {
-    rango :: Rango,
-    palo :: Palo
+    rango   :: Rango,
+    palo    :: Palo
 } deriving Eq
 
 data Jugador = Dealer | Player deriving Show
@@ -148,17 +176,34 @@ aplanarAux (Mitad x y z) = (aplanarAux y) ++ [x] ++ (aplanarAux z)
 reconstruir :: Mazo ->Mano ->Mazo
 reconstruir x (Mano y) = desdeMano (Mano ((aplanarAux x)\\y))
 
+
 robar :: Mazo ->Mano ->Eleccion ->Maybe (Mazo,Mano)
 robar x y z             | x == Vacio = Nothing
 
-robar (Mitad x a b) (Mano y) z | b == Vacio && z == Derecho   = Just(Vacio, Mano (y ++ ([x])))
+robar (Mitad x a b) (Mano y) z | b == Vacio && z == Derecho   = Nothing --Just (Vacio, Mano (y ++ ([x])))
+                               | a == Vacio && z == Izquierdo = Nothing --Just (Vacio, Mano (y ++ ([x])))
+                               | z == Izquierdo               = Just (a, Mano (y ++ [getMitadMazo a]))
+                               | z == Derecho                 = Just (b, Mano (y ++ [getMitadMazo b]))
+----------------------------------------------
+getMitadMazo :: Mazo -> Carta
+getMitadMazo (Mitad x a b) = x
+----------------------------------------------
+{-
+ROBAR 1
+
+robar :: Mazo ->Mano ->Eleccion ->Maybe (Mazo,Mano)
+robar x y z             | x == Vacio = Nothing
+
+robar (Mitad x a b) (Mano y) z | b == Vacio && z == Derecho   = Just (Vacio, Mano (y ++ ([x])))
                                | a == Vacio && z == Izquierdo = Just (Vacio, Mano (y ++ ([x])))
                                | z == Izquierdo               = Just (reconstruir a (Mano ((aplanarAux b) ++ [x])), Mano (y ++ ([x])))
                                | z == Derecho                 = Just (m,n) where
                                    m = reconstruir b (Mano ((aplanarAux a) ++ [x]))
                                    n = Mano (y ++ ([x]))
-
+-}
 {-
+ROBAR PUYAO
+
 robar :: Mazo ->Mano ->Eleccion ->Maybe (Mazo,Mano)
 robar x y z             | x == Vacio = Nothing
 
@@ -182,9 +227,3 @@ juegaLambda x (Mano y)  | x == Vacio                                            
 manoALista :: Mano -> [Carta]
 manoALista (Mano x) = x
 ----------------------------------------------
-
--- main :: IO ()
-main = do
-    g <- getStdGen
-    print $ barajar g baraja
-
