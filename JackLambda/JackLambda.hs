@@ -26,11 +26,15 @@ instance Show GameState where
 
 menu :: GameState -> IO ()
 menu game = do
+
+    putStrLn ("\nPartidas jugadas: " ++ (show (juegosJugados game)))
+    putStrLn ("Partidas ganadas por Jack Lambda: " ++ (show (victoriasLambda game)))
+    putStrLn ("Partidas ganadas por " ++ (nombre game) ++ ": " ++ (show ((juegosJugados game) - (victoriasLambda game))))
+    putStrLn ("Dinero restante: " ++ show (dinero game))
     putStrLn "\nElige una opcion (número):\n 1. Jugar ronda\n 2. Guardar partida\n 3. Cargar partida\n 4. Salir"
     opcion <- readLn
-    if (opcion == 1) then
-        --menu (jugar game)
-        return ()
+    if (opcion == 1) then do
+        jugar game
     else if (opcion == 2) then do
         guardar game
         menu game
@@ -60,7 +64,25 @@ menu game = do
         putStrLn "Ingresa una opción válida, gafo"
         menu game
 
---jugar :: GameState -> GameState
+jugar :: GameState -> IO ()
+jugar (GS juegosJugados victoriasLambda nombre generador dinero objetivo apuesta) = do
+    --let deck = barajar generador baraja
+    let tupla = (inicialLambda (barajar generador baraja))
+    let manoLambda = fst tupla
+    let deck = snd tupla
+    putStrLn (nombre ++ ", esta es mi primera carta: " ++ show ((manoALista manoLambda)!!0))
+    if (blackjack manoLambda) then do
+        putStrLn (nombre ++ ", he sacado blackjack. Yo gano.")
+        if ((dinero - apuesta) < (apuesta)) then
+            putStrLn (nombre ++ ", no te queda dinero. Es el fin del juego para ti")
+            --exit
+        else do
+            let game = GS (juegosJugados +1) (victoriasLambda +1) nombre generador (dinero-apuesta) objetivo apuesta
+            menu game
+    else do
+        let deck1 = desdeMano deck
+        print deck1
+
 
 guardar :: GameState -> IO ()
 guardar game = do
@@ -96,13 +118,13 @@ cargar = do
 
 start :: IO ()
 start = do
-    putStrLn "Before the loop!"
     -- we define "loop" as a recursive IO action
     let datos = do
-            putStrLn "Epale bicho, cual es tu nombre?"
+            putStrLn "Epale bicho, cual es tu nombre? (Sin espacios)"
             nombre <- getLine
-            if ((length nombre) < 1) then do
-                putStrLn "ERROR: No ingresaste nada, intentalo de nuevo"
+
+            if ((length nombre) < 1 || (length (words nombre)) > 1) then do
+                putStrLn "ERROR: Nombre inválido, intentalo de nuevo"
                 datos
                 return ()
             else do
@@ -146,6 +168,6 @@ start = do
 main :: IO ()
 main = do
     g <- getStdGen
-    let game = GS 0 0 "Ian" g 0 1 0
+    let game = GS 0 0 "Ian" g 10 20 1
     menu game
 --    start 
