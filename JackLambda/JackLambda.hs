@@ -173,7 +173,7 @@ hit (deck, hand) manoLambda doubleDown game @ (GS juegosJugados victoriasLambda 
             menu tempGame
         else if (doubleDown) then do
             putStrLn ("Suma " ++ show (valor (snd (fromJust estado))))
-            stand (deck, hand) manoLambda doubleDown game
+            stand (fromJust estado) manoLambda doubleDown game
         else do
             putStrLn ("Suma " ++ show (valor (snd (fromJust estado))))
             menu2 game (fromJust estado) manoLambda
@@ -315,7 +315,4 @@ start = do
 
 main :: IO ()
 main = do
---    g <- getStdGen
---    let game = GS 0 0 "Ian" g 10 20 1
---    menu game
     start
