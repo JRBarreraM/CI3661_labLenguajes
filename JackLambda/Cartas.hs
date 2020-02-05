@@ -37,7 +37,11 @@ module Cartas
     reconstruir,
     robar,
     juegaLambda,
-    manoALista
+    manoALista,
+    getCarta,
+    addCarta,
+    desdeLista,
+    unirManos
 ) where
 
 import System.Random
@@ -51,13 +55,13 @@ data Carta = Carta {
     palo    :: Palo
 } deriving Eq
 
-data Jugador = Dealer | Player deriving Show
+data Jugador = Dealer | Player deriving (Show, Eq)
 
 newtype Mano = Mano [Carta]
 
 data Mazo = Vacio | Mitad Carta Mazo Mazo deriving (Show, Eq)
 
-data Eleccion = Izquierdo | Derecho deriving (Eq)
+data Eleccion = Izquierdo | Derecho deriving (Eq, Read)
 
 
 instance Show Palo where
@@ -226,4 +230,16 @@ juegaLambda x (Mano y)  | x == Vacio                                            
 ----------------------------------------------
 manoALista :: Mano -> [Carta]
 manoALista (Mano x) = x
+
+getCarta :: Mazo -> Carta
+getCarta (Mitad x _ _) = x
+
+addCarta :: Mano -> Carta -> Mano
+addCarta (Mano x) y = Mano (x ++ [y])
+
+desdeLista :: [Carta] -> Mano
+desdeLista x = Mano x
+
+unirManos :: Mano -> Mano -> Mano
+unirManos (Mano x) (Mano y) = Mano (x ++ y)
 ----------------------------------------------

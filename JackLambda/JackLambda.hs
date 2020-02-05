@@ -10,6 +10,7 @@ import System.Random
 import System.IO
 import Control.Monad
 import Data.List
+import Data.Maybe
 
 data GameState = GS {
     juegosJugados   :: Int,
@@ -33,6 +34,7 @@ menu game = do
     putStrLn ("Dinero restante: " ++ show (dinero game))
     putStrLn "\nElige una opcion (número):\n 1. Jugar ronda\n 2. Guardar partida\n 3. Cargar partida\n 4. Salir"
     opcion <- readLn
+
     if (opcion == 1) then do
         jugar game
     else if (opcion == 2) then do
@@ -65,7 +67,7 @@ menu game = do
         menu game
 
 jugar :: GameState -> IO ()
-jugar (GS juegosJugados victoriasLambda nombre generador dinero objetivo apuesta) = do
+jugar game @ (GS juegosJugados victoriasLambda nombre generador dinero objetivo apuesta) = do
     --let deck = barajar generador baraja
     let tupla = (inicialLambda (barajar generador baraja))
     let manoLambda = fst tupla
@@ -77,11 +79,132 @@ jugar (GS juegosJugados victoriasLambda nombre generador dinero objetivo apuesta
             putStrLn (nombre ++ ", no te queda dinero. Es el fin del juego para ti")
             --exit
         else do
-            let game = GS (juegosJugados +1) (victoriasLambda +1) nombre generador (dinero-apuesta) objetivo apuesta
-            menu game
+            let tempGame = GS (juegosJugados +1) (victoriasLambda +1) nombre generador (dinero-apuesta) objetivo apuesta
+            menu tempGame
     else do
         let deck1 = desdeMano deck
-        print deck1
+        let mano = addCarta vacia (getCarta deck1)
+        putStrLn (nombre ++ ", ¿robarás de la izquierda o de la derecha?")
+        
+        ---------------------------------------------------------------------------------------------------------------------
+
+        input <- getLine
+        let lado = read (input) :: Eleccion
+        let estado = robar deck1 mano lado
+        
+        putStrLn (nombre ++ ", tu mano es " ++ show (snd (fromJust estado)))
+        if (blackjack (snd (fromJust estado))) then
+            putStrLn (nombre ++ ", tu mano es un blackjack")
+        else do
+            putStrLn ("Suma " ++ show (valor (snd (fromJust estado))))
+            let tempGame = GS (juegosJugados +1) victoriasLambda nombre generador (dinero-apuesta) objetivo apuesta
+            menu2 tempGame (fromJust estado) manoLambda
+
+menu2 :: GameState -> (Mazo, Mano) -> Mano -> IO ()
+menu2 game @ (GS juegosJugados victoriasLambda nombre generador dinero objetivo apuesta) (deck, hand) manoLambda = do
+    putStrLn "\nElige una opcion (número):\n 1. Hit\n 2. Stand\n 3. Double Down\n 4. Surrender"
+
+    --putStrLn "\nElige una opcion (número):\n 1. Hit\n 2. Stand\n 3. Double Down\n 4. Surrender"
+
+    opcion <- readLn
+    if (opcion == 1) then
+        hit (deck, hand) manoLambda game
+    else if (opcion == 2) then
+        stand (deck, hand) manoLambda True game
+    else if (opcion == 3 && dinero >= apuesta) then
+        --doubleDown game
+        return ()
+    else if (opcion == 4 && (cantidadCartas hand) == 2) then
+        --surrender game
+        return ()  
+    else do
+        putStrLn "Por favor ingrese una opción válida"
+        menu2 game (deck,hand) manoLambda
+
+hit :: (Mazo, Mano) -> Mano -> GameState -> IO ()
+hit (deck, hand) manoLambda game @ (GS juegosJugados victoriasLambda nombre generador dinero objetivo apuesta) = do 
+    if (puedePicar deck) then do
+        let deck1 = deck
+        
+        putStrLn (nombre ++ ", ¿robarás de la izquierda o de la derecha?")
+
+        ---------------------------------------------------------------------------------------------------------------------
+
+        input <- getLine
+        ----------------
+        let lado = read (input) :: Eleccion
+        let estado = robar deck1 hand lado
+        
+        putStrLn (nombre ++ ", tu mano es " ++ show (snd (fromJust estado)))
+        if (busted (snd (fromJust estado))) then do
+            putStrLn ("Suma " ++ show (valor (snd (fromJust estado))) ++ ". Perdiste.")
+            if ((dinero - apuesta) < (apuesta)) then
+                putStrLn (nombre ++ ", no te queda dinero. Es el fin del juego para ti")
+                --exit
+            else do
+                let tempGame = GS (juegosJugados +1) (victoriasLambda +1) nombre generador (dinero-apuesta) objetivo apuesta
+                menu tempGame
+        else do
+            putStrLn ("Suma " ++ show (valor (snd (fromJust estado))))
+            menu2 game (fromJust estado) manoLambda
+
+    else do
+        let deck1 = reconstruir (desdeMano (barajar generador baraja)) (unirManos hand manoLambda)
+
+        putStrLn (nombre ++ ", ¿robarás de la izquierda o de la derecha?")
+        
+        ---------------------------------------------------------------------------------------------------------------------
+
+        input <- getLine
+        ----------------
+        let lado = read (input) :: Eleccion
+        let estado = robar deck1 hand lado
+        
+        putStrLn (nombre ++ ", tu mano es " ++ show (snd (fromJust estado)))
+        if (busted (snd (fromJust estado))) then do
+            putStrLn ("Suma " ++ show (valor (snd (fromJust estado))) ++ ". Perdiste.")
+            if ((dinero - apuesta) < (apuesta)) then
+                putStrLn (nombre ++ ", no te queda dinero. Es el fin del juego para ti")
+                --exit
+            else do
+                let tempGame = GS (juegosJugados +1) (victoriasLambda +1) nombre generador (dinero-apuesta) objetivo apuesta
+                menu tempGame
+        else do
+            putStrLn ("Suma " ++ show (valor (snd (fromJust estado))))
+            menu2 game (fromJust estado) manoLambda
+
+stand :: (Mazo, Mano) -> Mano -> Bool -> GameState -> IO ()
+stand (deck, hand) manoLambda doubleDown game @ (GS juegosJugados victoriasLambda nombre generador dinero objetivo apuesta) = do 
+    putStrLn "Es mi turno ahora"
+    let manoLambdaFinal = juegaLambda deck manoLambda
+    putStrLn ("Mi mano es " ++ show (fromJust manoLambdaFinal))
+    putStrLn ("Suma " ++ show (valor (fromJust manoLambdaFinal)))
+    
+    ganadorFinal (valor hand) (valor (fromJust manoLambdaFinal)) doubleDown game
+
+--doubleDown :: GameState -> IO ()
+
+--surrender :: GameState -> IO ()
+
+ganadorFinal :: Int -> Int -> Bool -> GameState -> IO ()
+ganadorFinal player lambda doubleDown game @ (GS juegosJugados victoriasLambda nombre generador dinero objetivo apuesta) = do 
+    if (lambda > player) then do
+        putStrLn "Yo gano."
+        let tempGame = GS juegosJugados (victoriasLambda +1) nombre generador dinero objetivo apuesta
+        menu tempGame
+    else if (lambda == player) then do
+        putStrLn "Empatamos, así que yo gano."
+        let tempGame = GS juegosJugados (victoriasLambda +1) nombre generador dinero objetivo apuesta
+        menu tempGame
+    else do
+        putStrLn "Tu ganas."
+        if (doubleDown) then do
+            let tempGame = GS juegosJugados victoriasLambda nombre generador (dinero + (apuesta * 4)) objetivo apuesta
+            menu tempGame
+        else do
+            let tempGame = GS juegosJugados victoriasLambda nombre generador (dinero + (apuesta * 2)) objetivo apuesta
+            menu tempGame
+
 
 
 guardar :: GameState -> IO ()
