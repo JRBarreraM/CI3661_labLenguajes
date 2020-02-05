@@ -14,4 +14,5 @@ DEPENDENCY 	= Cartas
 
 lambdaMake: JackLambda.hs
 	$(CC) $(TARGET)
+clean:
 	rm *.hi *.o
