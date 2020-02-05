@@ -221,8 +221,6 @@ surrender game @ (GS juegosJugados victoriasLambda nombre generador dinero objet
 
 ganadorFinal :: Int -> Int -> Bool -> GameState -> IO ()
 ganadorFinal player lambda doubleDown game @ (GS juegosJugados victoriasLambda nombre generador dinero objetivo apuesta) = do
-    putStrLn ("player: " ++ show player)
-    putStrLn ("Lambda: " ++ show lambda)
     if (player > lambda || lambda > 21) then do
         putStrLn "Tu ganas."
         if (doubleDown) then do
