@@ -5,13 +5,6 @@
     Jose Barrera 15-10123
 --}
 
---Acciones:
---Hit: Pide otra carta al dealer.
---Stand: Decide no recibir mas cartas, cediendo el turno al dealer.
---Double down: Duplica la apuesta, recibe otra carta, y cede el turno.
---Surrender: Después de recibir la mano inicial, el jugador puede decidir
---no jugar la ronda y rendirse, cediendo la mitad de su apuesta.
-
 module Cartas
 (   
     Palo,
@@ -188,46 +181,18 @@ robar (Mitad x a b) (Mano y) z | b == Vacio && z == Derecho   = Nothing --Just (
                                | a == Vacio && z == Izquierdo = Nothing --Just (Vacio, Mano (y ++ ([x])))
                                | z == Izquierdo               = Just (a, Mano (y ++ [getMitadMazo a]))
                                | z == Derecho                 = Just (b, Mano (y ++ [getMitadMazo b]))
-----------------------------------------------
-getMitadMazo :: Mazo -> Carta
-getMitadMazo (Mitad x a b) = x
-----------------------------------------------
-{-
-ROBAR 1
-
-robar :: Mazo ->Mano ->Eleccion ->Maybe (Mazo,Mano)
-robar x y z             | x == Vacio = Nothing
-
-robar (Mitad x a b) (Mano y) z | b == Vacio && z == Derecho   = Just (Vacio, Mano (y ++ ([x])))
-                               | a == Vacio && z == Izquierdo = Just (Vacio, Mano (y ++ ([x])))
-                               | z == Izquierdo               = Just (reconstruir a (Mano ((aplanarAux b) ++ [x])), Mano (y ++ ([x])))
-                               | z == Derecho                 = Just (m,n) where
-                                   m = reconstruir b (Mano ((aplanarAux a) ++ [x]))
-                                   n = Mano (y ++ ([x]))
--}
-{-
-ROBAR PUYAO
-
-robar :: Mazo ->Mano ->Eleccion ->Maybe (Mazo,Mano)
-robar x y z             | x == Vacio = Nothing
-
-robar (Mitad x a b) (Mano y) z | b == Vacio && z == Derecho   = Nothing
-                               | a == Vacio && z == Izquierdo = Nothing
-                               | z == Izquierdo               = Just (reconstruir a (Mano (take 1 (aplanarAux a))), Mano (y ++ (take 1 (aplanarAux a))))
-                               | z == Derecho                 = Just (m,n) where 
-                                   m = reconstruir b (Mano [x])
-                                   n = Mano (y ++ ([x]))
--}
 
 juegaLambda :: Mazo ->Mano ->Maybe Mano
 juegaLambda x (Mano y)  | x == Vacio                                                    = Nothing
                         | (valor (Mano y)) > 16                                         = Just (Mano y)
---                        | valor (Mano (y ++ (take 1 (manoALista (aplanar x))))) > 16    = Just b
                         | otherwise                                                     = (juegaLambda a b) where
                             a = reconstruir x (Mano (take 1 (manoALista (aplanar x))))
                             b = Mano (y ++ (take 1 (manoALista (aplanar x))))
 
 ----------------------------------------------
+getMitadMazo :: Mazo -> Carta
+getMitadMazo (Mitad x a b) = x
+
 manoALista :: Mano -> [Carta]
 manoALista (Mano x) = x
 
