@@ -203,7 +203,7 @@ stand (deck, hand) manoLambda doubleDown game @ (GS juegosJugados victoriasLambd
     putStrLn ("Mi mano es " ++ show (fromJust manoLambdaFinal))
     putStrLn ("Suma " ++ show (valor (fromJust manoLambdaFinal)))
     
-    ganadorFinal (valor hand) (valor (fromJust manoLambdaFinal)) doubleDown game
+    ganadorFinal hand (fromJust manoLambdaFinal) doubleDown game
 
 doubleDown :: (Mazo, Mano) -> Mano -> GameState -> IO ()
 doubleDown (deck, hand) manoLambda game @ (GS juegosJugados victoriasLambda nombre generador dinero objetivo apuesta) = do 
@@ -219,9 +219,9 @@ surrender game @ (GS juegosJugados victoriasLambda nombre generador dinero objet
     let tempGame = (GS juegosJugados (victoriasLambda+1) nombre generador dineroRestante objetivo apuesta)
     menu tempGame
 
-ganadorFinal :: Int -> Int -> Bool -> GameState -> IO ()
+ganadorFinal :: Mano -> Mano -> Bool -> GameState -> IO ()
 ganadorFinal player lambda doubleDown game @ (GS juegosJugados victoriasLambda nombre generador dinero objetivo apuesta) = do
-    if (player > lambda || lambda > 21) then do
+    if ((valor player) > (valor lambda) || (valor lambda) > 21 || (blackjack player)) then do
         putStrLn "Tu ganas."
         if (doubleDown) then do
             let tempGame = GS juegosJugados victoriasLambda nombre generador (dinero + (apuesta * 4)) objetivo apuesta
@@ -229,7 +229,7 @@ ganadorFinal player lambda doubleDown game @ (GS juegosJugados victoriasLambda n
         else do
             let tempGame = GS juegosJugados victoriasLambda nombre generador (dinero + (apuesta * 2)) objetivo apuesta
             menu tempGame
-    else if (lambda > player) then do
+    else if ((valor lambda) > (valor player)) then do
         putStrLn "Yo gano."
         let tempGame = GS juegosJugados (victoriasLambda +1) nombre generador dinero objetivo apuesta
         menu tempGame
