@@ -1,83 +1,48 @@
-## Getting Started
+## Jack “El Monádico” Lambda
 
-These instructions will get you a copy of the project up and running on your local machine for development and testing purposes. See deployment for notes on how to deploy the project on a live system.
+Proyecto 1 del Laboratorio de Lenguajes de Programacion I / CI3661.
+Programa para jugar black jack en la terminal, escrito en haskell segun los lineamientos del enunciado Proyecto_I.pdf
 
-### Prerequisites
+### ¿Como correr el programa?
 
-What things you need to install the software and how to install them
-
-```
-Give examples
-```
-
-### Installing
-
-A step by step series of examples that tell you how to get a development env running
-
-Say what the step will be
+Teniendo los archivos Cartas.hs, JackLambda.hs y el Makefile. Corra 'make' para producir el ejecutable JackLambda y para usarlo corra ./JackLambda
 
 ```
-Give the example
+> make
+> ./JackLambda
 ```
 
-And repeat
+### Detalles de implementacion
 
-```
-until finished
-```
+Adicionalmente a las funciones obligatorias del proyecto se implementaron las siguientes, en modulo Cartas.hs:
 
-End with an example of getting some data out of the system or using it for a little demo
+* manoALista :: Mano -> [Carta]
+* getCarta :: Mazo -> Carta
+* addCarta :: Mano -> Carta -> Mano
+* desdeLista :: [Carta] -> Mano
+* unirManos :: Mano -> Mano -> Mano
+* getMitadMazo :: Mazo -> Carta
+* aplanarAux :: Mazo -> [Carta]
+* desdeManoAux :: (Mano, Carta, Mano) -> Mazo
+* barajarAux :: StdGen -> Mano -> Mano -> Mano
+* removeN :: Int -> [a] -> [a]
+* numTimesFound :: Eq a => a -> [a] -> Int
 
-## Running the tests
+Mientras que en el cliente, JackLambda.hs:
+* menu :: GameState -> IO ()
+* jugar :: GameState -> IO ()
+* pedir :: String -> IO (Eleccion)
+* menu2 :: GameState -> (Mazo, Mano) -> Mano -> IO ()
+* hit :: (Mazo, Mano) -> Mano -> Bool -> GameState -> IO()
+* stand :: (Mazo, Mano) -> Mano -> Bool -> GameState -> IO()
+* doubleDown :: (Mazo, Mano) -> Mano -> GameState -> IO ()
+* surrender :: GameState -> IO ()
+* ganadorFinal :: Int -> Int -> Bool -> GameState -> IO ()
+* guardar :: GameState -> IO ()
+* start :: IO ()
 
-Explain how to run the automated tests for this system
+## Autores
 
-### Break down into end to end tests
+* **José Barrera** - *15-10123* - [JRBarreraM](https://github.com/JRBarreraM)
 
-Explain what these tests test and why
-
-```
-Give an example
-```
-
-### And coding style tests
-
-Explain what these tests test and why
-
-```
-Give an example
-```
-
-## Deployment
-
-Add additional notes about how to deploy this on a live system
-
-## Built With
-
-* [Dropwizard](http://www.dropwizard.io/1.0.2/docs/) - The web framework used
-* [Maven](https://maven.apache.org/) - Dependency Management
-* [ROME](https://rometools.github.io/rome/) - Used to generate RSS Feeds
-
-## Contributing
-
-Please read [CONTRIBUTING.md](https://gist.github.com/PurpleBooth/b24679402957c63ec426) for details on our code of conduct, and the process for submitting pull requests to us.
-
-## Versioning
-
-We use [SemVer](http://semver.org/) for versioning. For the versions available, see the [tags on this repository](https://github.com/your/project/tags). 
-
-## Authors
-
-* **Billie Thompson** - *Initial work* - [PurpleBooth](https://github.com/PurpleBooth)
-
-See also the list of [contributors](https://github.com/your/project/contributors) who participated in this project.
-
-## License
-
-This project is licensed under the MIT License - see the [LICENSE.md](LICENSE.md) file for details
-
-## Acknowledgments
-
-* Hat tip to anyone whose code was used
-* Inspiration
-* etc
+* **Carlos Rivero** - *13-11216* - [CarlosRivero96](https://github.com/CarlosRivero96)
