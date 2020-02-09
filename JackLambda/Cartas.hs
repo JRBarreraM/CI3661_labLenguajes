@@ -33,7 +33,8 @@ module Cartas
     manoALista,
     addCarta,
     desdeLista,
-    unirManos
+    unirManos,
+    getMitadMazo
 ) where
 
 import System.Random

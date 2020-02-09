@@ -171,7 +171,7 @@ menuRonda game @ (GS juegosJugados victoriasLambda nombre generador dinero objet
 --Llama a reconstruir y a robar para obtener la nueva carta. Verifica si
 --la mano es busted. Muestra al usuario el valor de su mano despues
 --de robar. Chequea si fue llamada desde un doubleDown para llamar 
---a stand o al menu de juego
+--a stand o al menu de juego.
 hit :: (Mazo, Mano) -> Mano -> Bool -> GameState -> IO ()
 hit (deck, hand) manoLambda doubleDown game @ (GS juegosJugados victoriasLambda nombre generador dinero objetivo apuesta) = do 
     if (puedePicar deck) then do
