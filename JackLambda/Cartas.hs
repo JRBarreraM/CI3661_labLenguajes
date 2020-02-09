@@ -2,7 +2,7 @@
     Proyecto I: Haskell
     Jack “El Monádico”Lambda
     Carlos Rivero 13-11216
-    Jose Barrera 15-10123
+    Jose Barrera  15-10123
 --}
 
 module Cartas

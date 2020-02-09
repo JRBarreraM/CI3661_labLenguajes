@@ -2,7 +2,7 @@
     Proyecto I: Haskell
     Jack “El Monádico”Lambda
     Carlos Rivero 13-11216
-    Jose Barrera 15-10123
+    Jose Barrera  15-10123
 --}
 
 import Cartas
@@ -25,6 +25,8 @@ data GameState = GS {
 instance Show GameState where
     show (GS a b c d e f g) = "GS "++ show a ++" "++ show b ++" "++ c ++" "++ show d ++" "++ show e ++" "++ show f ++" "++ show g
 
+--Permite al usuario escoger: jugar, guardar, cargar o salir.
+--Chequea si el usuario puede segir apostando o ha llegado a la meta.
 menu :: GameState -> IO ()
 menu game @ (GS juegosJugados victoriasLambda nombre generador dinero objetivo apuesta) = do
     if (dinero < apuesta) then
@@ -49,6 +51,7 @@ menu game @ (GS juegosJugados victoriasLambda nombre generador dinero objetivo a
         else if (opcion == 3) then do
             putStrLn "Bicho, donde esta tu juego?"
             archivo <- getLine
+            --Abrimos y leemos el archivo de datos guardados
             handle <- openFile archivo ReadMode
             contents <- hGetContents handle
             let gsAttr = words contents
@@ -59,18 +62,21 @@ menu game @ (GS juegosJugados victoriasLambda nombre generador dinero objetivo a
             let dinero = read (gsAttr!!6)
             let objetivo = read (gsAttr!!7)
             let apuesta = read (gsAttr!!8)
-
             let gs = GS juegosJugados victoriasLambda nombre generador dinero objetivo apuesta
             putStrLn ("Se cargo exitosamente la partida: " ++ show gs)
+            --Cerramos el archivo de datos guardados
             hClose handle
+            --Se va al menu para continuar la partida cargada
             menu gs
 
         else if (opcion == 4) then
             putStrLn "Adios bicho"
         else do
-            putStrLn "Ingresa una opción válida, gafo"
+            putStrLn "Ingresa una opción válida, bicho"
             menu game
 
+--Controla el inicio de cada ronda, repartiendo las cartas iniciales.
+--Luego cede el control a menuRonda
 jugar :: GameState -> IO ()
 jugar game @ (GS juegosJugados victoriasLambda nombre generador dinero objetivo apuesta) = do
     let tupla = (inicialLambda (barajar generador baraja))
@@ -83,7 +89,7 @@ jugar game @ (GS juegosJugados victoriasLambda nombre generador dinero objetivo 
         menu tempGame
     else do
         let deck1 = desdeMano deck
-        let mano = addCarta vacia (getCarta deck1)
+        let mano = addCarta vacia (getMitadMazo deck1)
         
         lado <- pedir nombre
         let estado = robar deck1 mano lado
@@ -91,12 +97,13 @@ jugar game @ (GS juegosJugados victoriasLambda nombre generador dinero objetivo 
         if (blackjack (snd (fromJust estado))) then do
             putStrLn (nombre ++ ", tu mano es un blackjack")
             let tempGame = GS (juegosJugados +1) victoriasLambda nombre generador dinero objetivo apuesta
-            menu2 tempGame (fromJust estado) manoLambda
+            menuRonda tempGame (fromJust estado) manoLambda
         else do
             putStrLn ("Suma " ++ show (valor (snd (fromJust estado))))
             let tempGame = GS (juegosJugados +1) victoriasLambda nombre generador dinero objetivo apuesta
-            menu2 tempGame (fromJust estado) manoLambda
+            menuRonda tempGame (fromJust estado) manoLambda
 
+--Pregunta al usuario de que mazo quiere robar su carta
 pedir :: String -> IO (Eleccion)
 pedir nombre = do
             putStrLn (nombre ++ ", ¿robarás del mazo Izquierdo o del Derecho?")        
@@ -110,8 +117,11 @@ pedir nombre = do
                     putStrLn "Bicho, Izquierdo o Derecho"
                     pedir nombre
 
-menu2 :: GameState -> (Mazo, Mano) -> Mano -> IO ()
-menu2 game @ (GS juegosJugados victoriasLambda nombre generador dinero objetivo apuesta) (deck, hand) manoLambda = do
+--Permite al usuario decidir sus acciones durante una ronda:
+--hit, stand, doubleDown o surrender, verificando las condiciones
+--de cada una.
+menuRonda :: GameState -> (Mazo, Mano) -> Mano -> IO ()
+menuRonda game @ (GS juegosJugados victoriasLambda nombre generador dinero objetivo apuesta) (deck, hand) manoLambda = do
     putStrLn "\nElige una opcion (número):\n 1. Hit\n 2. Stand"
 
     if (((cantidadCartas hand) == 2) && (dinero >= apuesta)) then do
@@ -124,7 +134,7 @@ menu2 game @ (GS juegosJugados victoriasLambda nombre generador dinero objetivo 
             4 ->    surrender game
             otherwise -> do
                 putStrLn "Por favor ingrese una opción válida"
-                menu2 game (deck,hand) manoLambda
+                menuRonda game (deck,hand) manoLambda
             
     else if (dinero >= apuesta) then do
         putStrLn " 3. Double Down"
@@ -135,7 +145,7 @@ menu2 game @ (GS juegosJugados victoriasLambda nombre generador dinero objetivo 
             3 ->    doubleDown (deck, hand) manoLambda game
             otherwise -> do
                 putStrLn "Por favor ingrese una opción válida"
-                menu2 game (deck,hand) manoLambda
+                menuRonda game (deck,hand) manoLambda
 
     else if ((cantidadCartas hand) == 2) then do
         putStrLn " 4. Surrender"
@@ -146,7 +156,7 @@ menu2 game @ (GS juegosJugados victoriasLambda nombre generador dinero objetivo 
             4 ->    surrender game
             otherwise -> do
                 putStrLn "Por favor ingrese una opción válida"
-                menu2 game (deck,hand) manoLambda
+                menuRonda game (deck,hand) manoLambda
 
     else do
         opcion <- readLn
@@ -155,9 +165,13 @@ menu2 game @ (GS juegosJugados victoriasLambda nombre generador dinero objetivo 
             2 ->    stand (deck, hand) manoLambda False game
             otherwise -> do
                 putStrLn "Por favor ingrese una opción válida"
-                menu2 game (deck,hand) manoLambda
+                menuRonda game (deck,hand) manoLambda
 
-
+--Funcion que ejecuta la asigcion de robar del jugador.
+--Llama a reconstruir y a robar para obtener la nueva carta. Verifica si
+--la mano es busted. Muestra al usuario el valor de su mano despues
+--de robar. Chequea si fue llamada desde un doubleDown para llamar 
+--a stand o al menu de juego
 hit :: (Mazo, Mano) -> Mano -> Bool -> GameState -> IO ()
 hit (deck, hand) manoLambda doubleDown game @ (GS juegosJugados victoriasLambda nombre generador dinero objetivo apuesta) = do 
     if (puedePicar deck) then do
@@ -176,7 +190,7 @@ hit (deck, hand) manoLambda doubleDown game @ (GS juegosJugados victoriasLambda 
             stand (fromJust estado) manoLambda doubleDown game
         else do
             putStrLn ("Suma " ++ show (valor (snd (fromJust estado))))
-            menu2 game (fromJust estado) manoLambda
+            menuRonda game (fromJust estado) manoLambda
 
     else do
         let deck1 = reconstruir (desdeMano (barajar generador baraja)) (unirManos hand manoLambda)
@@ -194,23 +208,27 @@ hit (deck, hand) manoLambda doubleDown game @ (GS juegosJugados victoriasLambda 
             stand (fromJust estado) manoLambda doubleDown game
         else do
             putStrLn ("Suma " ++ show (valor (snd (fromJust estado))))
-            menu2 game (fromJust estado) manoLambda
+            menuRonda game (fromJust estado) manoLambda
 
+--Si el usuario hace un stand, se debe distinguir si este es consecuencia de
+--un double down o no, y lambda roba el resto de su mano.
 stand :: (Mazo, Mano) -> Mano -> Bool -> GameState -> IO ()
 stand (deck, hand) manoLambda doubleDown game @ (GS juegosJugados victoriasLambda nombre generador dinero objetivo apuesta) = do 
     putStrLn "Es mi turno ahora"
     let manoLambdaFinal = juegaLambda deck manoLambda
     putStrLn ("Mi mano es " ++ show (fromJust manoLambdaFinal))
     putStrLn ("Suma " ++ show (valor (fromJust manoLambdaFinal)))
-    
     ganadorFinal hand (fromJust manoLambdaFinal) doubleDown game
 
+--Si el usuario hace un doubleDown, se recibe la mano y el mazo.
+--para hacer un hit y luego un stand. Se resta el dinero del hit de una vez.
 doubleDown :: (Mazo, Mano) -> Mano -> GameState -> IO ()
 doubleDown (deck, hand) manoLambda game @ (GS juegosJugados victoriasLambda nombre generador dinero objetivo apuesta) = do 
     let dineroRestante = dinero - apuesta
     hit (deck, hand) manoLambda True (GS juegosJugados victoriasLambda nombre generador dineroRestante objetivo apuesta)
 
-
+--Si el usuario se rine se suma una victoria a lambda, y se asigna el dinero restante
+--en el game state. Luego se vuelve al menu
 surrender :: GameState -> IO ()
 surrender game @ (GS juegosJugados victoriasLambda nombre generador dinero objetivo apuesta) = do
     putStrLn (nombre ++ ", te has rendido. Yo gano")
@@ -219,6 +237,8 @@ surrender game @ (GS juegosJugados victoriasLambda nombre generador dinero objet
     let tempGame = (GS juegosJugados (victoriasLambda+1) nombre generador dineroRestante objetivo apuesta)
     menu tempGame
 
+--Dadas las manos del jugador y de lambda determina quien gana,
+--hace los cambios al game state correspondientes para volver al menu
 ganadorFinal :: Mano -> Mano -> Bool -> GameState -> IO ()
 ganadorFinal player lambda doubleDown game @ (GS juegosJugados victoriasLambda nombre generador dinero objetivo apuesta) = do
     if ((valor player) > (valor lambda) || (valor lambda) > 21 || (blackjack player)) then do
@@ -238,7 +258,7 @@ ganadorFinal player lambda doubleDown game @ (GS juegosJugados victoriasLambda n
         let tempGame = GS juegosJugados (victoriasLambda +1) nombre generador dinero objetivo apuesta
         menu tempGame
 
-
+--Guarda en un archivo indicado por consola el game state actual
 guardar :: GameState -> IO ()
 guardar game = do
     putStrLn "Bicho, donde quieres guardar tu juego?"
@@ -247,9 +267,13 @@ guardar game = do
     hPutStrLn handle (show game)
     hClose handle
 
+--Primer menu con el que interactua el usuario al inicio de cada juego
+--se encarga de cargar de un archivo o pedir por consola la data
+--de juego necesaria para ir al menu primer menu de juego
 start :: IO ()
 start = do
     let datos = do
+            --Ya que es una partida nueva se piden los datos para configurar la partida al usuario
             putStrLn "Epale bicho, cual es tu nombre? (Sin espacios)"
             nombre <- getLine
 
@@ -268,14 +292,14 @@ start = do
                     putStrLn "Epale bicho, cuanto dinero hace falta para ganar?"
                     objetivo <- readLn
                     if (objetivo <= dinero) then do
-                        putStrLn "ERROR: el objetivo no puede ser menor al dinero inicial, gafo, intentalo de nuevo"
+                        putStrLn "ERROR: el objetivo no puede ser menor al dinero inicial, bicho, intentalo de nuevo"
                         datos
                         return ()
                     else do
                         putStrLn "Epale bicho, cuanto dinero se apostara en cada ronda?"
                         apuesta <- readLn
                         if (apuesta <= 0 || apuesta > dinero) then do
-                            putStrLn "ERROR: la apuesta debe ser mayor a cero y menor o igual que el dinero inicial, gafo, intentalo de nuevo"
+                            putStrLn "ERROR: la apuesta debe ser mayor a cero y menor o igual que el dinero inicial, bicho, intentalo de nuevo"
                             datos
                             return ()
                         else do
@@ -286,9 +310,11 @@ start = do
     putStrLn "Bicho, quieres cargar una partida? (y,n)"
     input <- getLine
     case input of
+        --En caso afirmativo se busca, abre y lee el archivo
         "y" -> do
             putStrLn "Bicho, donde esta tu juego?"
             archivo <- getLine
+            --Abrimos y leemos el archivo de datos guardados
             handle <- openFile archivo ReadMode
             contents <- hGetContents handle
             let gsAttr = words contents
@@ -299,14 +325,17 @@ start = do
             let dinero = read (gsAttr!!6)
             let objetivo = read (gsAttr!!7)
             let apuesta = read (gsAttr!!8)
-
             let gs = GS juegosJugados victoriasLambda nombre generador dinero objetivo apuesta
             putStrLn ("Se cargo exitosamente la partida: " ++ show gs)
+            --Cerramos el archivo de datos guardados
             hClose handle
+            --Se va al menu para continuar la partida cargada
             menu gs
 
+        --En caso negativo se procede a jugar una partida nueva
         "n" -> datos
 
+        --En caso de otra entrada se repite la pregunta
         otherwise -> do
             putStrLn "Bicho, \"y\" o \"n\""
             start
