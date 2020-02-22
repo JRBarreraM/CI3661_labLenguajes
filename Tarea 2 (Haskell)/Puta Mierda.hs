@@ -21,9 +21,9 @@ plegarArbolMB   :: (a -> b)
 
 plegarArbolMB transVacio transRamaM transRamaB = plegar
 where
-plegar Vacio            = transformarVacio
-plegar (RamaM x y)      = transformarRamaM x (plegar y)
-plegar (RamaB x y z)    = transformarRamaB x (plegar y) (plegar z)
+plegar Vacio            = transVacio
+plegar (RamaM x y)      = transRamaM x (plegar y)
+plegar (RamaB x y z)    = transRamaB x (plegar y) (plegar z)
 
 -- 0.d)
 sumarArbolMB :: (Num a) => ArbolMB a -> a
@@ -42,18 +42,69 @@ transRamaM (x y)    = aplanarArbolMB y : x
 transRamaB (x y z)  = aplanarArbolMB y : x : aplanarArbolMB z
 
 -- 0.f)
+import Data.Tuple.Select
+import Data.Maybe
+
 analizarArbolMB :: (Ord a) => ArbolMB a -> Maybe (a, a, Bool)
 analizarArbolMB = plegarArbolMB transVacio transRamaM transRamaB
 where
-transVacio = ¿?
-transRamaM = ¿?
-transRamaB = ¿?
+transVacio          = Nothing
+transRamaM (x y)    = Just ( a, b, c) where
+    a = min x (Sel1 d) where
+        d = (fromMaybe ((maxBound :: Int), 0, True) (analizarArbolMB y))
+
+    b = max x (Sel2 d) where
+        d = (fromMaybe (0, (minBound :: Int), True) (analizarArbolMB y))
+
+    c = (Sel3 d) && (x >= (Sel2 d)) where
+        d = (fromMaybe (0, (minBound :: Int), True) (analizarArbolMB y))
+
+transRamaB (x y z)  = Just ( a, b, c) where
+    a = min x (min (Sel1 d) (Sel1 e)) where
+        d = (fromMaybe ((maxBound :: Int), 0, True) (analizarArbolMB y))
+        e = (fromMaybe ((maxBound :: Int), 0, True) (analizarArbolMB z))
+
+    b = max x (max (Sel2 d) (Sel2 e)) where
+        d = (fromMaybe (0, (minBound :: Int), True) (analizarArbolMB y))
+        e = (fromMaybe (0, (minBound :: Int), True) (analizarArbolMB z))
+
+    c = (Sel3 d) && (x >= (Sel2 d)) && (x <= (Sel1 e)) where
+        d = (fromMaybe (0, (minBound :: Int), True) (analizarArbolMB y))
+        e = (fromMaybe ((maxBound :: Int), 0, True) (analizarArbolMB z))
 
 -- 0.g)
 Deberia tomar n funciones
 
 -- 0.h)
 foldr
+
+-- 0.i) (Extra)
+foldable
+
+
+-- 1.a)
+Es necesario poner la S en la instancia porque el Monad Secuencial depende de su estado interno para generar el resultado final.
+Y porque la instancia debe ser de kind (* -> *)
+
+-- 1.b)
+return :: a -> Secuencial s a
+(>>=) :: Secuencial s a -> (a -> Secuencial s b) -> Secuencial s b
+(>>) :: Secuencial s a -> Secuencial s b -> Secuencial s b
+fail :: String -> Secuencial s a
+
+-- 1.c)
+return x = Secuencial ( \s -> (x, s) )
+
+-- 1.d)
+(Secuencial programa) >>= transformador =
+    Secuencial $ \estadoInicial ->
+        let (resultado, nuevoEstado)    = programa estadoInicial
+            (Secuencial nuevoPrograma)  = transformador resultado
+        in nuevoPrograma nuevoEstado
+
+-- 1.e) (Extra)
+State
+
 
 -- INVESTIGACION
 id :: a -> a
@@ -73,7 +124,6 @@ subs (id const) const id
     id
 
 --b)
---subs (const (subs id id)) (subs (subs (const subs) const) (const (subs id id)))
 subs subs const (subs (const (subs subs (subs (subs subs const)))) const)
 
 -- c)
