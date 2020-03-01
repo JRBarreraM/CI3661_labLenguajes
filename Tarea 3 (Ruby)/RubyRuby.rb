@@ -1,3 +1,5 @@
+#!/usr/bin/ruby
+
 =begin
     Considere una clase Vector2, representando elementos de R2,
     con dos campos, x, y correspondiente a las coordenadas del vector.
@@ -112,3 +114,12 @@
     Nota 2: El elemento [:a, 4] está en el resultado del ejemplo anterior,
     pero [4. :a] no. El orden interno de las tuplas es importante.
 =end
+
+
+def cartesianProd(a,b)
+    return a.product(b)
+end
+
+cartesianProd([:a, :b, :c],[4, :a, 5]).each do |i|
+    p i
+end
