@@ -123,3 +123,24 @@ end
 cartesianProd([:a, :b, :c],[4, :a, 5]).each do |i|
     p i
 end
+
+class CartesianProd 
+    def initialize( a, b ) 
+         @a = a
+         @b = b
+    end
+
+    def iterate
+        @a.each do |i|
+            @b.each do |j|
+                yield( [i,j] )
+            end
+        end
+    end
+end
+
+cartesiano = CartesianProd.new([:a, :b, :c], [4, 5])
+
+cartesiano.iterate do |i|
+    p i
+end
