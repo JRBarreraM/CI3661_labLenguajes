@@ -33,58 +33,42 @@
 =end
 
 class Vector2
+    attr_accessor :x, :y
     def initialize( x, y ) 
         @x = x
         @y = y
     end
-
-    def getX
-        return @x
-    end
-
-    def getY
-        return @y
-    end
-    
-    def setX(x)
-        @x = x
-    end
-    
-    def setY(y)
-        @y = y
-    end
-
     def magnitud
         Math.sqrt(x**2 + y**2)
     end
 
     def +(vector)
         v = Vector2.new(0,0)
-        v.setX(self.getX + vector.getX)
-        v.setY(self.getY + vector.getY)
+        v.x = self.x + vector.x
+        v.y = self.y + vector.y
         return v
     end
     def -(vector)
         v = Vector2.new(0,0)
-        v.setX(self.getX - vector.getX)
-        v.setY(self.getY - vector.getY)
+        v.x = self.x - vector.x
+        v.y = self.y - vector.y
         return v
     end
     def *(vector)
-        return self.getX * vector.getX + self.getY * vector.getY
+        return self.x * vector.x + self.y * vector.y
     end
     def ==(vector)
-        eq = (self.getX() == vector.getX()) and (self.getY() == vector.getY())
+        eq = (self.x() == vector.x()) and (self.y() == vector.y())
         return eq
     end
     def -@
         v = Vector2.new(0,0)
-        v.setX(-self.getX())
-        v.setY(-self.getY())
+        v.x = -self.x()
+        v.y = -self.y()
         return v
     end
     def to_s
-        return "(" + self.getX.to_s + ", " + self.getY.to_s + ")"
+        return "(" + self.x.to_s + ", " + self.y.to_s + ")"
     end
 end
 
@@ -96,18 +80,18 @@ class Complejo < Vector2
 
     def *(complex)
         c = Complejo.new(0)
-        c.setX(self.getX * complex.getX - self.getY * complex.getY)
-        c.setY(self.getX * complex.getY + self.getY * complex.getX)
+        c.x = self.x * complex.x - self.y * complex.y
+        c.y = self.x * complex.y + self.y * complex.x
         return c
     end
     def ~@
         c = Complejo.new(0)
-        c.setX(self.getX)
-        c.setY(-self.getY)
+        c.x = self.x
+        c.y = -self.y
         return c
     end
     def /(complex)
-        if (complex.getX == 0 and complex.getY == 0)
+        if complex.x == 0 and complex.y == 0
             puts "No se puede dividir entre 0"
         else
             c = Complejo.new(0)
@@ -119,78 +103,180 @@ class Complejo < Vector2
             a = complex*(~complex)
 
             #Final
-            c.setX(c.getX / a.getX)
-            c.setY(c.getY / a.getX)
+            c.x = (c.x / a.x)
+            c.y = (c.y / a.x)
             
             return c
         end
     end
     def to_s
-        if self.getY == 0
-            return self.getX.to_s
+        if self.y == 0
+            return self.x.to_s
 
-        elsif self.getX == 0
-            return self.getY.to_s + "i"
+        elsif self.x == 0
+            return self.y.to_s + "i"
 
-        elsif self.getY < 0
-            return self.getX.to_s + " - " + (-self.getY).to_s + "i"
+        elsif self.y < 0
+            return self.x.to_s + " - " + (-self.y).to_s + "i"
         
         else
-            return self.getX.to_s + " + " + self.getY.to_s + "i"
+            return self.x.to_s + " + " + self.y.to_s + "i"
         end
     end
 end
 
 class Moneda
+    attr_accessor :valor
     def initialize(valor)
         @valor = valor
     end
-    class Dolar
-        def to_s
-            return @valor.to_s + " dolares"
+    def en(tipo)
+        if self.is_a? Dolar
+            case tipo
+            when :dolares then
+                self
+            when :yens then
+                Yen.new(self.valor * 107.15)
+            when :euros then
+                Euro.new(self.valor / 1.12)
+            when :bolivares then
+                Bolivar.new(self.valor * 74000.0)
+            when :bitcoins then
+                Bitcoin.new(self.valor / 8760.0)
+            end
+        elsif self.is_a? Yen
+            return Dolar.new(self.valor / 107.15).en(tipo)
+        elsif self.is_a? Euro
+            return Dolar.new(self.valor * 1.12).en(tipo)
+        elsif self.is_a? Bolivar
+            return Dolar.new(self.valor / 74000.0).en(tipo)
+        elsif self.is_a? Bitcoin
+            return Dolar.new(self.valor * 8760.0).en(tipo)
         end
     end
-    class Yen
-        def to_s
-            return @valor.to_s + " yens"
+
+=begin
+    def comparar(moneda)
+        if self.en(:dolares).valor < moneda.en(:dolares).valor
+            return :menor
+        elsif self.en(:dolares).valor < moneda.en(:dolares).valor
+            return :mayor
+        else
+            return :igual
         end
     end
-    class Euro
-        def to_s
-            return @valor.to_s + " euros"
+=end
+
+    def comparar(moneda)
+        moneda.comp(self)
+    end
+end
+class Dolar < Moneda
+    def to_s
+        return @valor.to_s + " dolares"
+    end
+    def comp(moneda)
+        if self.valor < moneda.en(:dolares).valor
+            return :mayor
+        elsif self.valor > moneda.en(:dolares).valor
+            return :menor
+        else
+            return :igual
         end
     end
-    class Bolivar
-        def to_s
-            return @valor.to_s + " bolívares"
+end
+class Yen < Moneda
+    def to_s
+        return @valor.to_s + " yens"
+    end
+    def comp(moneda)
+        if self.valor < moneda.en(:yens).valor
+            return :mayor
+        elsif self.valor > moneda.en(:yens).valor
+            return :menor
+        else
+            return :igual
         end
     end
-    class Bitcoin
-        def to_s
-            return @valor.to_s + " bitcoins"
+end
+class Euro < Moneda
+    def to_s
+        return @valor.to_s + " euros"
+    end
+    def comp(moneda)
+        if self.valor < moneda.en(:euros).valor
+            return :mayor
+        elsif self.valor > moneda.en(:euros).valor
+            return :menor
+        else
+            return :igual
+        end
+    end
+end
+class Bolivar < Moneda
+    def to_s
+        return @valor.to_s + " bolívares"
+    end
+    def comp(moneda)
+        if self.valor < moneda.en(:bolivares).valor
+            return :mayor
+        elsif self.valor > moneda.en(:bolivares).valor
+            return :menor
+        else
+            return :igual
+        end
+    end
+end
+class Bitcoin < Moneda
+    def to_s
+        return @valor.to_s + " bitcoins"
+    end
+    def comp(moneda)
+        if self.valor < moneda.en(:bitcoins).valor
+            return :mayor
+        elsif self.valor > moneda.en(:bitcoins).valor
+            return :menor
+        else
+            return :igual
         end
     end
 end
 
 class Float
     def dolares
-
-        return 
+        return Dolar.new(self)
+    end
+    def yens
+        return Yen.new(self)
+    end
+    def euros
+        return Euro.new(self)
+    end
+    def bolivares
+        return Bolivar.new(self)
+    end
+    def bitcoins
+        return Bitcoin.new(self)
     end
 end
 
-v1 = Complejo.new(3.0,2.0)
-v2 = Complejo.new(-1.0,2.0)
-
-puts v1*v2
-puts v1/v2
-puts v1.to_s
-p (v1+v2)
-p (v1-v2)
-p (-v1)
-p (v1*v2)
-p (v1==v1)
-p (v1==v2)
+class Integer
+    def dolares
+        return Dolar.new(self)
+    end
+    def yens
+        return Yen.new(self)
+    end
+    def euros
+        return Euro.new(self)
+    end
+    def bolivares
+        return Bolivar.new(self)
+    end
+    def bitcoins
+        return Bitcoin.new(self)
+    end
+end
 
 
 =begin
