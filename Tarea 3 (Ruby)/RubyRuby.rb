@@ -32,6 +32,167 @@
     pueda ser representado en una cadena de caracteres como (x, y).
 =end
 
+class Vector2
+    def initialize( x, y ) 
+        @x = x
+        @y = y
+    end
+
+    def getX
+        return @x
+    end
+
+    def getY
+        return @y
+    end
+    
+    def setX(x)
+        @x = x
+    end
+    
+    def setY(y)
+        @y = y
+    end
+
+    def magnitud
+        Math.sqrt(x**2 + y**2)
+    end
+
+    def +(vector)
+        v = Vector2.new(0,0)
+        v.setX(self.getX + vector.getX)
+        v.setY(self.getY + vector.getY)
+        return v
+    end
+    def -(vector)
+        v = Vector2.new(0,0)
+        v.setX(self.getX - vector.getX)
+        v.setY(self.getY - vector.getY)
+        return v
+    end
+    def *(vector)
+        return self.getX * vector.getX + self.getY * vector.getY
+    end
+    def ==(vector)
+        eq = (self.getX() == vector.getX()) and (self.getY() == vector.getY())
+        return eq
+    end
+    def -@
+        v = Vector2.new(0,0)
+        v.setX(-self.getX())
+        v.setY(-self.getY())
+        return v
+    end
+    def to_s
+        return "(" + self.getX.to_s + ", " + self.getY.to_s + ")"
+    end
+end
+
+class Complejo < Vector2
+    def initialize(x,y=0)
+        @x = x
+        @y = y
+    end
+
+    def *(complex)
+        c = Complejo.new(0)
+        c.setX(self.getX * complex.getX - self.getY * complex.getY)
+        c.setY(self.getX * complex.getY + self.getY * complex.getX)
+        return c
+    end
+    def ~@
+        c = Complejo.new(0)
+        c.setX(self.getX)
+        c.setY(-self.getY)
+        return c
+    end
+    def /(complex)
+        if (complex.getX == 0 and complex.getY == 0)
+            puts "No se puede dividir entre 0"
+        else
+            c = Complejo.new(0)
+
+            #Numerator
+            c = self*(~complex)
+
+            #Denominator
+            a = complex*(~complex)
+
+            #Final
+            c.setX(c.getX / a.getX)
+            c.setY(c.getY / a.getX)
+            
+            return c
+        end
+    end
+    def to_s
+        if self.getY == 0
+            return self.getX.to_s
+
+        elsif self.getX == 0
+            return self.getY.to_s + "i"
+
+        elsif self.getY < 0
+            return self.getX.to_s + " - " + (-self.getY).to_s + "i"
+        
+        else
+            return self.getX.to_s + " + " + self.getY.to_s + "i"
+        end
+    end
+end
+
+class Moneda
+    def initialize(valor)
+        @valor = valor
+    end
+    class Dolar
+        def to_s
+            return @valor.to_s + " dolares"
+        end
+    end
+    class Yen
+        def to_s
+            return @valor.to_s + " yens"
+        end
+    end
+    class Euro
+        def to_s
+            return @valor.to_s + " euros"
+        end
+    end
+    class Bolivar
+        def to_s
+            return @valor.to_s + " bolívares"
+        end
+    end
+    class Bitcoin
+        def to_s
+            return @valor.to_s + " bitcoins"
+        end
+    end
+end
+
+class Float
+    def dolares
+
+        return 
+    end
+end
+
+v1 = Complejo.new(3.0,2.0)
+v2 = Complejo.new(-1.0,2.0)
+
+puts v1*v2
+puts v1/v2
+puts v1.to_s
+p (v1+v2)
+p (v1-v2)
+p (-v1)
+p (v1*v2)
+p (v1==v1)
+p (v1==v2)
+
+
 =begin
     Los números complejos C tienen una interpretación geométrica en R2, tomando
     la parte real como la coordenada x y la parte imaginaria como la coordenada y.
@@ -116,6 +277,8 @@
 =end
 
 
+
+=begin
 def cartesianProd(a,b)
     return a.product(b)
 end
@@ -144,3 +307,4 @@ cartesiano = CartesianProd.new([:a, :b, :c], [4, 5])
 cartesiano.iterate do |i|
     p i
 end
+=end
