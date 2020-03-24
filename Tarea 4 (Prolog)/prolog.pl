@@ -1,10 +1,16 @@
-* :- 0.
-up(*) :- 1.
+church(*).
 
-up(X) :- X+1.
+church(up(A)) :- church(A).
 
-suma(up(up(*)), up(*), X) :-
-    X is up(up(up(*))).
+suma(A, *, A) :- church(A).
+suma(A, up(B), up(C)) :-
+    suma(A, B, C).
 
-run :-
-    suma(up(up(*)),up(*),X).
+resta(A, *, A) :- church(A).
+resta(up(A), up(B), C) :-
+    resta(A, B, C).
+
+producto(A, *, *) :- church(A).
+producto(A, up(B), C) :-
+    suma(D, A, C),
+    producto(A, B, D).
